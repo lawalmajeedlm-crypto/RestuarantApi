@@ -3,8 +3,8 @@
     public enum Role
     {
         Admin,
-        Staff,
-        Customer
+        User,
+        Manager
     }
 
     public class User : BaseEntity

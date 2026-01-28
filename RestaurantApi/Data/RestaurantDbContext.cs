@@ -28,19 +28,35 @@ namespace RestaurantApi.Data
                 .Property(e => e.RowVersion)
                 .IsRowVersion();
 
-            // ✅ Apply global query filter for soft delete once on BaseEntity
-            modelBuilder.Entity<BaseEntity>().HasQueryFilter(e => !e.IsDeleted);
+            //  Apply global query filter for soft delete once on BaseEntity
+            modelBuilder.Entity<BaseEntity>()
+                .HasQueryFilter(e => !e.IsDeleted);
 
             // Relationships
             modelBuilder.Entity<MenuItem>()
                 .HasOne(m => m.Category)
                 .WithMany(c => c.MenuItems)
-                .HasForeignKey(m => m.CategoryId);
+                .HasForeignKey(m => m.CategoryId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Order>()
                 .HasMany(o => o.Items)
-                .WithOne()
-                .HasForeignKey(oi => oi.MenuItemId);
+                .WithOne(oi => oi.Order)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.MenuItem)
+                .WithMany()
+                .HasForeignKey(oi => oi.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // map entities to distinct tables
+            modelBuilder.Entity<MenuItem>().ToTable("MenuItems");
+            modelBuilder.Entity<Category>().ToTable("Categories");
+            modelBuilder.Entity<Order>().ToTable("Orders");
+            modelBuilder.Entity<OrderItem>().ToTable("OrderItems");
+            modelBuilder.Entity<User>().ToTable("Users");
         }
     }
 }
