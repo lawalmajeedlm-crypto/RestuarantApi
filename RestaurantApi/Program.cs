@@ -6,8 +6,10 @@ using RestaurantApi.Repositories;
 using RestaurantApi.Repositories.Interfaces;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
-
+using Swashbuckle.AspNetCore.SwaggerUI;
+using RestaurantApi.Models; // Needed for SwaggerUIOptions
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,17 +20,25 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<RestaurantDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register UnitOfWork
+
+// Register AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
+// Register UnitOfWork + repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 
-
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
+
+if (string.IsNullOrEmpty(secretKey))
+{
+    throw new InvalidOperationException("JWT SecretKey is missing in appsettings.json");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -50,22 +60,58 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add Swagger
+// Add Swagger + JWT support
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Restaurant API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter JWT as: Bearer {token}",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
+// seed default users and roles
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<RestaurantDbContext>();
+    DataSeeder.Seed(dbContext);
+}
 
 // Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Restaurant API v1");
+        c.RoutePrefix = "swagger"; //  works now
+    });
 }
 
 app.UseHttpsRedirection();
 
-// Enable authentication & authorization
 app.UseAuthentication();
 app.UseAuthorization();
 

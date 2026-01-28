@@ -2,11 +2,13 @@
 using RestaurantApi.Models;
 using RestaurantApi.Repositories.Interfaces;
 using RestaurantApi.Common;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestaurantApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ReservationsController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RestaurantApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using RestaurantApi.Repositories.Interfaces;
 using RestaurantApi.Common;
 
@@ -7,6 +8,7 @@ namespace RestaurantApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class OrdersController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;

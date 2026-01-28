@@ -40,11 +40,6 @@ namespace RestaurantApi.Migrations
                     b.Property<string>("DeletedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("nvarchar(13)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -63,9 +58,7 @@ namespace RestaurantApi.Migrations
 
                     b.ToTable("BaseEntity");
 
-                    b.HasDiscriminator().HasValue("BaseEntity");
-
-                    b.UseTphMappingStrategy();
+                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.Category", b =>
@@ -80,7 +73,7 @@ namespace RestaurantApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasDiscriminator().HasValue("Category");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.MenuItem", b =>
@@ -103,16 +96,7 @@ namespace RestaurantApi.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("BaseEntity", t =>
-                        {
-                            t.Property("Description")
-                                .HasColumnName("MenuItem_Description");
-
-                            t.Property("Name")
-                                .HasColumnName("MenuItem_Name");
-                        });
-
-                    b.HasDiscriminator().HasValue("MenuItem");
+                    b.ToTable("MenuItems", (string)null);
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.Order", b =>
@@ -129,7 +113,7 @@ namespace RestaurantApi.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.HasDiscriminator().HasValue("Order");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.OrderItem", b =>
@@ -139,15 +123,22 @@ namespace RestaurantApi.Migrations
                     b.Property<Guid>("MenuItemId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("MenuItemId1")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Subtotal")
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasIndex("MenuItemId");
 
-                    b.HasDiscriminator().HasValue("OrderItem");
+                    b.HasIndex("MenuItemId1");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.Reservation", b =>
@@ -166,16 +157,7 @@ namespace RestaurantApi.Migrations
                     b.Property<int>("TableNumber")
                         .HasColumnType("int");
 
-                    b.ToTable("BaseEntity", t =>
-                        {
-                            t.Property("CustomerId")
-                                .HasColumnName("Reservation_CustomerId");
-
-                            t.Property("Status")
-                                .HasColumnName("Reservation_Status");
-                        });
-
-                    b.HasDiscriminator().HasValue("Reservation");
+                    b.ToTable("Reservations");
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.User", b =>
@@ -197,13 +179,16 @@ namespace RestaurantApi.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("int");
 
-                    b.ToTable("BaseEntity", t =>
-                        {
-                            t.Property("Name")
-                                .HasColumnName("User_Name");
-                        });
+                    b.ToTable("Users", (string)null);
+                });
 
-                    b.HasDiscriminator().HasValue("User");
+            modelBuilder.Entity("RestaurantApi.Models.Category", b =>
+                {
+                    b.HasOne("RestaurantApi.Models.BaseEntity", null)
+                        .WithOne()
+                        .HasForeignKey("RestaurantApi.Models.Category", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.MenuItem", b =>
@@ -211,17 +196,70 @@ namespace RestaurantApi.Migrations
                     b.HasOne("RestaurantApi.Models.Category", "Category")
                         .WithMany("MenuItems")
                         .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("RestaurantApi.Models.BaseEntity", null)
+                        .WithOne()
+                        .HasForeignKey("RestaurantApi.Models.MenuItem", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("RestaurantApi.Models.Order", b =>
+                {
+                    b.HasOne("RestaurantApi.Models.BaseEntity", null)
+                        .WithOne()
+                        .HasForeignKey("RestaurantApi.Models.Order", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RestaurantApi.Models.OrderItem", b =>
                 {
-                    b.HasOne("RestaurantApi.Models.Order", null)
-                        .WithMany("Items")
+                    b.HasOne("RestaurantApi.Models.BaseEntity", null)
+                        .WithOne()
+                        .HasForeignKey("RestaurantApi.Models.OrderItem", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RestaurantApi.Models.MenuItem", "MenuItem")
+                        .WithMany()
                         .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RestaurantApi.Models.MenuItem", null)
+                        .WithMany("OrderItems")
+                        .HasForeignKey("MenuItemId1");
+
+                    b.HasOne("RestaurantApi.Models.Order", "Order")
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MenuItem");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("RestaurantApi.Models.Reservation", b =>
+                {
+                    b.HasOne("RestaurantApi.Models.BaseEntity", null)
+                        .WithOne()
+                        .HasForeignKey("RestaurantApi.Models.Reservation", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RestaurantApi.Models.User", b =>
+                {
+                    b.HasOne("RestaurantApi.Models.BaseEntity", null)
+                        .WithOne()
+                        .HasForeignKey("RestaurantApi.Models.User", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -229,6 +267,11 @@ namespace RestaurantApi.Migrations
             modelBuilder.Entity("RestaurantApi.Models.Category", b =>
                 {
                     b.Navigation("MenuItems");
+                });
+
+            modelBuilder.Entity("RestaurantApi.Models.MenuItem", b =>
+                {
+                    b.Navigation("OrderItems");
                 });
 
             modelBuilder.Entity("RestaurantApi.Models.Order", b =>

@@ -8,12 +8,22 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "request",
-        "Type": "RestaurantApi.Controllers.AuthController\u002BLoginRequest",
+        "Name": "dto",
+        "Type": "RestaurantApi.DTOs.LoginDto",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
+    "ReturnTypes": [
+      {
+        "Type": "System.String",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "RestaurantApi.Controllers.AuthController",
@@ -24,12 +34,22 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "user",
-        "Type": "RestaurantApi.Models.User",
+        "Name": "dto",
+        "Type": "RestaurantApi.DTOs.RegisterUserDto",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
+    "ReturnTypes": [
+      {
+        "Type": "RestaurantApi.DTOs.UserDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "RestaurantApi.Controllers.MenuItemsController",
